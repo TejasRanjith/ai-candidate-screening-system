@@ -1,0 +1,20 @@
+NAME: Sarah Chen
+TARGET ROLE: AI/ML Engineer
+EMAIL: sarah.chen@mleng.io
+
+SUMMARY:
+AI/ML Engineer with 4+ years of experience training and deploying deep learning models, fine-tuning LLMs, and building low-latency RAG architectures in production.
+
+TECHNICAL SKILLS:
+Python, PyTorch, HuggingFace Transformers, LangChain, ChromaDB, FastAPI, Docker, CUDA, MLflow, Scikit-Learn
+
+CORE DOMAINS:
+Deep Learning, Retrieval-Augmented Generation, NLP, Optimization, Model Quantization
+
+EXPERIENCE:
+- Senior Machine Learning Engineer @ NeuralScale (2022 - Present): Architected an enterprise RAG pipeline serving 2M daily queries with sub-120ms p95 latency. Optimized cross-encoder re-ranking and implemented semantic caching in Redis.
+- ML Engineer @ DataVanguard (2020 - 2022): Fine-tuned Llama and BERT models for classification and summarization. Mitigated severe training class imbalance using focal loss and SMOTE, boosting minority class F1-score from 0.58 to 0.83.
+- Applied AI Researcher @ TechLabs (2019 - 2020): Researched gradient descent optimization variants (AdamW, Lion) and regularized deep CNNs using DropPath, Mixup, and BatchNorm.
+
+EDUCATION:
+M.S. in Computer Science (Machine Learning Concentration), University of Washington

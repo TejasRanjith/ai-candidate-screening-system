@@ -1,0 +1,20 @@
+NAME: Elena Rostova
+TARGET ROLE: Data Scientist
+EMAIL: elena.rostova@analytics.org
+
+SUMMARY:
+Data Scientist with 3+ years applying statistical modeling, ensemble machine learning algorithms, and hypothesis testing to solve customer churn and pricing optimization.
+
+TECHNICAL SKILLS:
+Python, R, Scikit-Learn, XGBoost, Pandas, NumPy, SQL, Statsmodels, Tableau, Git
+
+CORE DOMAINS:
+Supervised Learning, Feature Engineering, Hypothesis Testing, Model Evaluation & ROC-AUC, Regularization
+
+EXPERIENCE:
+- Data Scientist @ MarketMetrics (2022 - Present): Developed end-to-end churn prediction engine using XGBoost and Random Forests with 0.88 ROC-AUC. Performed extensive hyperparameter tuning using Bayesian Optimization.
+- Junior Data Scientist @ RetailOptima (2020 - 2022): Engineered feature selection pipelines using L1 Lasso regularization to reduce dimensionality from 450 to 32 critical variables. Designed and evaluated A/B tests with strict statistical power analysis.
+- Data Analyst @ StatCore (2019 - 2020): Analyzed customer lifetime value distributions, calibrated logistic regression probability outputs, and built automated reporting dashboards.
+
+EDUCATION:
+M.S. in Applied Statistics, University of Michigan

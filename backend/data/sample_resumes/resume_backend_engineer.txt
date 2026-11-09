@@ -1,0 +1,20 @@
+NAME: Marcus Vance
+TARGET ROLE: Senior Backend Engineer
+EMAIL: marcus.vance@systems.dev
+
+SUMMARY:
+Distributed systems and backend architect with 5+ years building scalable microservices, high-throughput APIs, and transactional database architectures.
+
+TECHNICAL SKILLS:
+Python, FastAPI, Go, PostgreSQL, Redis, Kafka, Docker, Kubernetes, SQLAlchemy, gRPC
+
+CORE DOMAINS:
+Distributed Systems, Database Indexing & Concurrency, Event-Driven Systems, Caching Strategies, API Reliability
+
+EXPERIENCE:
+- Lead Backend Engineer @ CloudSync Systems (2021 - Present): Designed distributed ingestion platform handling 45,000 requests/sec using FastAPI, Kafka, and Redis. Solved cache stampede using probabilistic early expiration and distributed mutex locks.
+- Backend Engineer @ FinTech Core (2019 - 2021): Optimized PostgreSQL relational schema and B+ Tree indexes, reducing 99th percentile query latency from 850ms to 18ms. Implemented strict serializable transactions for ledger consistency.
+- Systems Developer @ DataStream Inc (2018 - 2019): Built asynchronous worker services utilizing non-blocking event loops and circuit breaker patterns to guarantee 99.99% service uptime.
+
+EDUCATION:
+B.S. in Software Engineering, Purdue University
