@@ -1,8 +1,11 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, String, Integer, Float, JSON, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+
+def utc_now():
+    return datetime.now(timezone.utc)
 
 class InterviewTurn(Base):
     __tablename__ = "interview_turns"
@@ -23,7 +26,7 @@ class InterviewTurn(Base):
     score = Column(Float, nullable=True)  # 1.0 to 10.0
     evaluation_feedback = Column(JSON, nullable=True)  # Accuracy, strengths, improvements, model answer
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
     submitted_at = Column(DateTime, nullable=True)
 
     # Relationship

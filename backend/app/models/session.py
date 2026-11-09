@@ -1,8 +1,11 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, String, Integer, Float, JSON, DateTime, Text
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+
+def utc_now():
+    return datetime.now(timezone.utc)
 
 class CandidateSession(Base):
     __tablename__ = "candidate_sessions"
@@ -26,8 +29,8 @@ class CandidateSession(Base):
     overall_score = Column(Float, default=0.0)
     final_report = Column(JSON, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
     # Relationships
     turns = relationship("InterviewTurn", back_populates="session", cascade="all, delete-orphan", order_by="InterviewTurn.turn_index")

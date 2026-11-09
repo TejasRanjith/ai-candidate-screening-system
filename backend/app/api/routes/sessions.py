@@ -2,7 +2,7 @@ import os
 import shutil
 from pathlib import Path
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
@@ -255,7 +255,7 @@ async def submit_answer(
     turn.candidate_answer = payload.answer
     turn.score = eval_result["score"]
     turn.evaluation_feedback = eval_result
-    turn.submitted_at = datetime.utcnow()
+    turn.submitted_at = datetime.now(timezone.utc)
 
     # Advance session state
     session_obj.current_turn_index = current_turn_idx

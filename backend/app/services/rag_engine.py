@@ -1,6 +1,8 @@
 import logging
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 import chromadb
+from pypdf import PdfReader
 from app.core.config import settings
 
 logger = logging.getLogger("screening.rag")
@@ -29,16 +31,160 @@ ROLE_FUNDAMENTALS = {
     ]
 }
 
+def chunk_text(text: str, chunk_size: int = 700, chunk_overlap: int = 100) -> List[str]:
+    """
+    Split text recursively on natural boundaries (paragraphs, lines, sentences)
+    maintaining chunk_size between 600-800 chars and chunk_overlap ~100 chars.
+    """
+    if not text or not text.strip():
+        return []
+
+    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+    chunks = []
+    current_chunk = ""
+
+    for para in paragraphs:
+        if len(para) > chunk_size:
+            lines = [l.strip() for l in para.split("\n") if l.strip()]
+            for line in lines:
+                if len(line) > chunk_size:
+                    sentences = [s.strip() + "." for s in line.split(". ") if s.strip()]
+                    for s in sentences:
+                        if len(current_chunk) + len(s) + 1 <= chunk_size:
+                            current_chunk = (current_chunk + " " + s).strip()
+                        else:
+                            if current_chunk:
+                                chunks.append(current_chunk)
+                                current_chunk = current_chunk[-chunk_overlap:] + " " + s
+                            else:
+                                chunks.append(s[:chunk_size])
+                                current_chunk = s[chunk_size - chunk_overlap:]
+                else:
+                    if len(current_chunk) + len(line) + 1 <= chunk_size:
+                        current_chunk = (current_chunk + "\n" + line).strip()
+                    else:
+                        if current_chunk:
+                            chunks.append(current_chunk)
+                            current_chunk = current_chunk[-chunk_overlap:] + "\n" + line
+                        else:
+                            current_chunk = line
+        else:
+            if len(current_chunk) + len(para) + 2 <= chunk_size:
+                current_chunk = (current_chunk + "\n\n" + para).strip()
+            else:
+                if current_chunk:
+                    chunks.append(current_chunk)
+                    current_chunk = current_chunk[-chunk_overlap:] + "\n\n" + para
+                else:
+                    current_chunk = para
+
+    if current_chunk and current_chunk.strip():
+        chunks.append(current_chunk.strip())
+
+    return chunks
+
+def extract_file_content(file_path: Path) -> str:
+    """Extract text from markdown, text, or PDF files."""
+    if file_path.suffix.lower() == ".pdf":
+        reader = PdfReader(str(file_path))
+        pages_text = []
+        for page in reader.pages:
+            t = page.extract_text()
+            if t:
+                pages_text.append(t)
+        return "\n\n".join(pages_text)
+    else:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            return f.read()
+
+def infer_metadata(file_name: str, text: str) -> Dict[str, str]:
+    """Extract book, chapter, and target role metadata."""
+    fn_lower = file_name.lower()
+    if "burkov" in fn_lower or "ml" in fn_lower:
+        book = "The Hundred-Page Machine Learning Book (Andriy Burkov)"
+        role = "AI/ML Engineer"
+    elif "backend" in fn_lower or "sys" in fn_lower:
+        book = "Backend Systems & Distributed Architecture Handbook"
+        role = "Backend Engineer"
+    else:
+        book = "Technical Screening Knowledge Base"
+        role = "General"
+
+    chapter = file_name
+    for line in text.splitlines()[:5]:
+        if line.startswith("# ") or line.startswith("## "):
+            chapter = line.replace("#", "").strip()
+            break
+
+    return {
+        "source": file_name,
+        "book": book,
+        "chapter": chapter,
+        "role": role
+    }
+
 class RAGEngine:
     def __init__(self):
         self.client = chromadb.PersistentClient(path=settings.CHROMA_PERSIST_DIR)
         self.collection = self.client.get_or_create_collection("interview_knowledge_base")
+        if self.collection.count() == 0:
+            self.auto_ingest_corpus()
+
+    def auto_ingest_corpus(self):
+        """Automatically index the textbook corpus if the vector database is empty."""
+        try:
+            corpus_path = Path(settings.CORPUS_DIR)
+            if not corpus_path.exists():
+                logger.warning(f"Corpus path {corpus_path} not found.")
+                return
+
+            files = [f for f in corpus_path.iterdir() if f.is_file() and f.suffix.lower() in [".md", ".txt", ".pdf"]]
+            if not files:
+                logger.warning(f"No documents found in {corpus_path}.")
+                return
+
+            logger.info(f"Auto-ingesting {len(files)} corpus documents into ChromaDB...")
+            all_docs = []
+            all_metadatas = []
+            all_ids = []
+
+            for file_path in sorted(files):
+                content = extract_file_content(file_path)
+                meta = infer_metadata(file_path.name, content)
+                chunks = chunk_text(content, chunk_size=settings.CHUNK_SIZE, chunk_overlap=settings.CHUNK_OVERLAP)
+
+                for idx, chunk in enumerate(chunks):
+                    chunk_id = f"{file_path.stem}_chunk_{idx:03d}"
+                    all_ids.append(chunk_id)
+                    all_docs.append(chunk)
+                    all_metadatas.append({
+                        "source": meta["source"],
+                        "book": meta["book"],
+                        "chapter": meta["chapter"],
+                        "role": meta["role"],
+                        "chunk_index": idx
+                    })
+
+            batch_size = 50
+            for i in range(0, len(all_ids), batch_size):
+                end = i + batch_size
+                self.collection.upsert(
+                    ids=all_ids[i:end],
+                    documents=all_docs[i:end],
+                    metadatas=all_metadatas[i:end]
+                )
+            logger.info(f"Successfully auto-ingested {len(all_ids)} chunks into ChromaDB.")
+        except Exception as e:
+            logger.error(f"Failed to auto-ingest corpus: {e}", exc_info=True)
 
     def retrieve_context(self, query: str, role: str = "AI/ML Engineer", k: int = 3) -> List[Dict[str, Any]]:
         """
         Query textbook vector database for grounded chunks.
         Includes fallback to role fundamentals if candidate query yields weak similarity or empty results.
         """
+        if self.collection.count() == 0:
+            self.auto_ingest_corpus()
+
         if self.collection.count() == 0:
             logger.warning("Knowledge base collection is empty. Run ingest_book.py first.")
             return []
